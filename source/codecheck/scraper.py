@@ -372,6 +372,11 @@ def normalize_record(
             if abstract_text is not None
             else None,
         },
+        "dates": {
+            "published": check_date or "",
+            "updated": check_time or "",
+            "retrieved": utc_now(),
+        },
         "check": {
             "date": check_date,
             "timestamp": check_time,
@@ -2310,9 +2315,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--output",
         "--output-dir",
+        "--output-root",
         type=Path,
-        default=Path("."),
-        help="Output directory (default: current directory).",
+        default=Path("output"),
+        help="Output directory (default: output/).",
     )
     parser.add_argument(
         "--certificate-id",

@@ -156,7 +156,7 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 ## Modular layout
 
 ```text
-src/zenodo_community_harvester/
+src/zenodo/
 ├── cli.py                    # Argument parsing and profile selection
 ├── engine.py                 # Shared crawl/checkpoint/download orchestration
 ├── http.py                   # Requests, retries, rate delay, and streaming

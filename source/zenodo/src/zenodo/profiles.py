@@ -9,7 +9,7 @@ from typing import Any
 
 
 DEFAULT_PROFILE_KEY = "the-economic-journal"
-_PROFILE_PACKAGE = "zenodo_community_harvester.community_profiles"
+_PROFILE_PACKAGE = "zenodo.community_profiles"
 _SAFE_SLUG = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
 _PROFILE_ORDER = ("the-economic-journal", "restud", "econometric-society", "jeea")
 

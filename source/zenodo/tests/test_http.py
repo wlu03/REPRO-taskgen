@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from zenodo_community_harvester.http import DownloadSkipped, HTTPClient, download_file, validate_remote_url
-from zenodo_community_harvester.util import file_matches, parse_checksum
+from zenodo.http import DownloadSkipped, HTTPClient, download_file, validate_remote_url
+from zenodo.util import file_matches, parse_checksum
 
 
 class URLSafetyTests(unittest.TestCase):

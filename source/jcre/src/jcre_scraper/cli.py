@@ -36,7 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Process the first three matching records and default to smoke-output/.",
     )
-    parser.add_argument("--output", type=Path, default=None, help="Output directory (default: jcre-output/).")
+    parser.add_argument("--output", "--output-dir", "--output-root", type=Path, default=None, help="Output directory (default: output/).")
     parser.add_argument("--source-url", default=DEFAULT_SOURCE_URL, help="JCRE publications index URL.")
     parser.add_argument("--resume", action="store_true", help="Resume .part downloads and preserve completed files.")
     parser.add_argument("--refresh", action="store_true", help="Refetch the publications page and package metadata.")
@@ -133,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
 
     output_dir = args.output
     if output_dir is None:
-        output_dir = Path("smoke-output" if args.smoke_test else "jcre-output")
+        output_dir = Path("smoke-output" if args.smoke_test else "output")
     max_records = args.max_records
     if args.smoke_test and max_records is None:
         max_records = 3

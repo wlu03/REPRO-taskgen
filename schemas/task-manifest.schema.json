@@ -1,0 +1,487 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://uiuc-kang-lab.github.io/repro-taskgen/schemas/task-manifest.schema.json",
+  "title": "REPRO-taskgen agent-visible task manifest",
+  "description": "Public task metadata. This schema intentionally has no fields for reports, finding outcomes, reviewer notes, expected answers, or the gold score.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "candidate_id",
+    "release_id",
+    "split",
+    "paper",
+    "package",
+    "targets",
+    "environment",
+    "resource_limits",
+    "output_contract",
+    "licenses",
+    "integrity",
+    "built_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{5,95}$"
+    },
+    "candidate_id": {
+      "type": "string",
+      "pattern": "^repro_[a-z0-9][a-z0-9_-]{7,95}$"
+    },
+    "release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "split": {
+      "enum": [
+        "train",
+        "development",
+        "test",
+        "evaluation_only",
+        "unsplit"
+      ]
+    },
+    "paper": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "doi",
+        "title",
+        "artifact_id",
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "doi": {
+          "type": "string",
+          "pattern": "^10\\.[0-9]{4,9}/\\S+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "const": "paper.pdf"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "family_key",
+        "release_key",
+        "root_path",
+        "file_manifest_path",
+        "file_manifest_sha256",
+        "file_count",
+        "total_bytes"
+      ],
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "family_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "release_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "root_path": {
+          "const": "replication_package/"
+        },
+        "file_manifest_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "file_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "total_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/target"
+      }
+    },
+    "environment": {
+      "$ref": "#/$defs/environment"
+    },
+    "resource_limits": {
+      "$ref": "#/$defs/resourceLimits"
+    },
+    "output_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file_name",
+        "root_relative",
+        "json_key",
+        "value_type",
+        "minimum",
+        "maximum"
+      ],
+      "properties": {
+        "file_name": {
+          "const": "reproducibility_score.json"
+        },
+        "root_relative": {
+          "const": true
+        },
+        "json_key": {
+          "const": "reproducibility_score"
+        },
+        "value_type": {
+          "const": "integer"
+        },
+        "minimum": {
+          "const": 1
+        },
+        "maximum": {
+          "const": 4
+        }
+      }
+    },
+    "licenses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "artifact_id",
+          "expression",
+          "attribution_path",
+          "release_decision"
+        ],
+        "properties": {
+          "artifact_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expression": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "attribution_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "release_decision": {
+            "enum": [
+              "redistribute",
+              "redistribute_with_attribution",
+              "reference_only_refetch"
+            ]
+          }
+        }
+      }
+    },
+    "source_provenance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_key",
+          "source_record_id",
+          "source_url",
+          "retrieved_at"
+        ],
+        "properties": {
+          "source_key": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]+$"
+          },
+          "source_record_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "default": []
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "public_tree_manifest_sha256",
+        "all_files_materialized",
+        "hashes_verified",
+        "path_contract_verified",
+        "leakage_audit_status",
+        "family_split_status",
+        "clean_execution_count"
+      ],
+      "properties": {
+        "public_tree_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "all_files_materialized": {
+          "const": true
+        },
+        "hashes_verified": {
+          "const": true
+        },
+        "path_contract_verified": {
+          "const": true
+        },
+        "leakage_audit_status": {
+          "const": "pass"
+        },
+        "family_split_status": {
+          "const": "pass"
+        },
+        "clean_execution_count": {
+          "type": "integer",
+          "minimum": 2
+        }
+      }
+    },
+    "built_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "locator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "page": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "section": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "finding_id",
+        "type",
+        "paper_label",
+        "verbatim_claim",
+        "paper_locator"
+      ],
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]+$"
+        },
+        "type": {
+          "enum": [
+            "figure",
+            "table",
+            "text_claim"
+          ]
+        },
+        "paper_label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verbatim_claim": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "paper_locator": {
+          "$ref": "#/$defs/locator"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "text_claim"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verbatim_claim": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "software": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "proprietary"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "proprietary": {
+          "type": "boolean"
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "container_or_vm_digest",
+        "languages",
+        "software",
+        "network_policy"
+      ],
+      "properties": {
+        "container_or_vm_digest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "languages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "r",
+              "stata",
+              "python",
+              "matlab",
+              "julia",
+              "shell",
+              "sas",
+              "other",
+              "none",
+              "unknown"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "software": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/software"
+          }
+        },
+        "network_policy": {
+          "enum": [
+            "disabled",
+            "allowlisted"
+          ]
+        },
+        "allowed_hosts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
+    "resourceLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wall_clock_seconds",
+        "cpu_cores",
+        "memory_bytes",
+        "disk_bytes",
+        "max_processes"
+      ],
+      "properties": {
+        "wall_clock_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7200
+        },
+        "cpu_cores": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "memory_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "disk_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_processes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from zenodo_community_harvester.model import (
+from zenodo.model import (
     catalog_summary,
     community_summary,
     merge_download_state,
@@ -14,7 +14,7 @@ from zenodo_community_harvester.model import (
     search_next,
     search_total,
 )
-from zenodo_community_harvester.util import ensure_within, html_to_text, safe_component, safe_filename, stable_file_id
+from zenodo.util import ensure_within, html_to_text, safe_component, safe_filename, stable_file_id
 
 
 FIXTURES = Path(__file__).parent / "fixtures"

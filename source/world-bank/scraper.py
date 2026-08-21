@@ -26,8 +26,8 @@ from pathlib import Path
 from typing import Any, Iterable
 from urllib.parse import quote, unquote, urljoin, urlsplit
 
-import requests
-from bs4 import BeautifulSoup
+import requests  # pyright: ignore[reportMissingImports]  # type: ignore[import-not-found]
+from bs4 import BeautifulSoup  # pyright: ignore[reportMissingImports]  # type: ignore[import-not-found]
 
 
 BASE_URL = "https://reproducibility.worldbank.org"
@@ -847,6 +847,11 @@ def normalize_record(
         "catalog_url": f"{BASE_URL}/catalog/{catalog_id}" if catalog_id else "",
         "collection": str(listing.get("repo_title") or "").strip(),
         "year": str(dataset.get("year_start") or listing.get("year_start") or "").strip(),
+        "dates": {
+            "published": str(dataset.get("year_start") or listing.get("year_start") or "").strip(),
+            "updated": "",
+            "retrieved": utc_now(),
+        },
         "authors": str(dataset.get("authoring_entity") or listing.get("authoring_entity") or "").strip(),
         "package_doi": normalize_doi(dataset.get("doi") or listing.get("doi")),
         "paper": {
@@ -981,10 +986,12 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-root",
+        "--output-dir",
+        "--output",
         type=Path,
         default=None,
         help=(
-            "output directory (default: project directory, or smoke-output "
+            "output directory (default: output/, or smoke-output/ "
             "when --smoke-test is used)"
         ),
     )
@@ -1005,7 +1012,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
 def run(args: argparse.Namespace) -> int:
     if args.output_root is None:
         project_root = Path(__file__).resolve().parent
-        root = project_root / "smoke-output" if args.smoke_test else project_root
+        root = project_root / ("smoke-output" if args.smoke_test else "output")
     else:
         root = args.output_root.expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)

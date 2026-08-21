@@ -579,7 +579,7 @@ def run(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
     errors = ErrorLogger(output_root / "logs" / "errors.jsonl", run_id, args.community)
     user_agent = os.environ.get(
         "ZENODO_USER_AGENT",
-        f"zenodo-community-harvester/{__version__} (public research metadata harvester)",
+        f"zenodo/{__version__} (public research metadata harvester)",
     )
     client = HTTPClient(
         base_url=args.base_url,

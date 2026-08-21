@@ -12,9 +12,9 @@ from types import SimpleNamespace
 from unittest import mock
 from urllib.parse import urlsplit
 
-from zenodo_community_harvester.cli import _selected_profiles, build_parser, main
-from zenodo_community_harvester.platform_catalog import write_platform_catalog
-from zenodo_community_harvester.profiles import all_profiles, custom_profile, resolve_profile
+from zenodo.cli import _selected_profiles, build_parser, main
+from zenodo.platform_catalog import write_platform_catalog
+from zenodo.profiles import all_profiles, custom_profile, resolve_profile
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -120,9 +120,9 @@ class ProfileRegistryTests(unittest.TestCase):
             self.assertEqual(2, raised.exception.code)
 
     def test_all_journals_paces_between_community_engines(self):
-        with tempfile.TemporaryDirectory() as temp, mock.patch("zenodo_community_harvester.cli.run", return_value=0) as run_mock, mock.patch(
-            "zenodo_community_harvester.cli.write_platform_catalog"
-        ), mock.patch("zenodo_community_harvester.cli.time.sleep") as sleep_mock:
+        with tempfile.TemporaryDirectory() as temp, mock.patch("zenodo.cli.run", return_value=0) as run_mock, mock.patch(
+            "zenodo.cli.write_platform_catalog"
+        ), mock.patch("zenodo.cli.time.sleep") as sleep_mock:
             code = main(["--all-journals", "--output", temp, "--delay", "2.1"])
             self.assertEqual(0, code)
             self.assertEqual(4, run_mock.call_count)

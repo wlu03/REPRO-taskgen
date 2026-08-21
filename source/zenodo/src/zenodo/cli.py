@@ -61,6 +61,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help="Zenodo base URL; useful for the official sandbox.")
     parser.add_argument(
         "--output",
+        "--output-dir",
+        "--output-root",
         help="Single-journal output directory, or parent directory in all-journals mode (defaults are journal-isolated).",
     )
     parser.add_argument("--query", default="", help="Optional Zenodo query-string search inside each selected community.")

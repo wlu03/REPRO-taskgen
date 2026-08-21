@@ -15,4 +15,4 @@ else
 fi
 
 cd "${HARVESTER_ROOT}"
-exec "${HARVESTER_PYTHON}" -m zenodo_community_harvester "$@"
+exec "${HARVESTER_PYTHON}" -m zenodo "$@"

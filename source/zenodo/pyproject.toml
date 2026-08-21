@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "zenodo-community-harvester"
+name = "zenodo"
 version = "2.0.0"
 description = "Modular metadata and file harvester for economics replication communities on Zenodo"
 readme = "README.md"
@@ -13,10 +13,10 @@ authors = []
 dependencies = []
 
 [project.scripts]
-zenodo-community-harvester = "zenodo_community_harvester.cli:main"
+zenodo = "zenodo.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-zenodo_community_harvester = ["community_profiles/*.json"]
+zenodo = ["community_profiles/*.json"]

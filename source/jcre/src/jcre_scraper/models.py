@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from .utils import utc_now
+
 
 @dataclass
 class RelatedLink:
@@ -117,6 +119,11 @@ class PublicationRecord:
         payload = asdict(self)
         payload["related_links"] = [item.to_dict() for item in self.related_links]
         payload["replication"] = self.replication.to_dict()
+        payload["dates"] = {
+            "published": str(self.year) if self.year else "",
+            "updated": getattr(self.replication, "metadata_modified", "") or "",
+            "retrieved": utc_now(),
+        }
         return payload
 
     @classmethod

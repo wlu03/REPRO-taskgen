@@ -12,7 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from zenodo_community_harvester.cli import _reconcile_local_download_state, main
+from zenodo.cli import _reconcile_local_download_state, main
 
 
 FIXTURES = Path(__file__).parent / "fixtures"

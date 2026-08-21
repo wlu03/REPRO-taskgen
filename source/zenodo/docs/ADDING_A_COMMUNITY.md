@@ -17,7 +17,7 @@ Confirm that the record files response provides an `entries` list and exact `ent
 
 ## 2. Add one data file
 
-Create `src/zenodo_community_harvester/community_profiles/<profile>.json`:
+Create `src/zenodo/community_profiles/<profile>.json`:
 
 ```json
 {

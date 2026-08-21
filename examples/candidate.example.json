@@ -1,0 +1,236 @@
+{
+  "schema_version": "1.0.0",
+  "candidate_id": "repro_12345678-1234-5678-9234-567812345678",
+  "aliases": [
+    "world_bank:RR_EXAMPLE_2026_001"
+  ],
+  "workflow_state": "eligibility_review",
+  "paper": {
+    "paper_id": "paper:10.1234/example.2026",
+    "doi": "10.1234/example.2026",
+    "title": "Synthetic paper used only to validate the canonical schema",
+    "authors": [
+      {
+        "name": "Example, Ada",
+        "orcid": null,
+        "affiliations": [
+          "Example University"
+        ]
+      }
+    ],
+    "venue": "Example Journal",
+    "publication_date": "2026-01-15",
+    "identifiers": [
+      {
+        "scheme": "doi",
+        "value": "https://doi.org/10.1234/EXAMPLE.2026",
+        "normalized_value": "10.1234/example.2026",
+        "entity_type": "paper",
+        "resolver_status": "resolved",
+        "resolved_at": "2026-08-21T12:00:00Z",
+        "source_observation_id": "obs_world_bank_example"
+      }
+    ],
+    "landing_urls": [
+      "https://doi.org/10.1234/example.2026"
+    ],
+    "discipline_status": "social_science",
+    "discipline_evidence_ids": [
+      "obs_world_bank_example"
+    ]
+  },
+  "source_observations": [
+    {
+      "source_observation_id": "obs_world_bank_example",
+      "source_key": "world_bank",
+      "source_record_id": "RR_EXAMPLE_2026_001",
+      "source_url": "https://reproducibility.worldbank.org/catalog/999999",
+      "harvest_run_id": "20260821T120000Z_0123456789abcdef",
+      "harvested_at": "2026-08-21T12:00:00Z",
+      "upstream_created_at": "2026-02-01T00:00:00Z",
+      "upstream_updated_at": "2026-03-01T00:00:00Z",
+      "raw_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "raw_path": "runs/20260821T120000Z_0123456789abcdef/raw/world_bank/RR_EXAMPLE_2026_001.json",
+      "query_scope": {
+        "page_size": 100,
+        "sort": "title:asc"
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "artifact_paper_pdf",
+      "role": "paper_pdf",
+      "visibility": "agent_visible",
+      "family_key": "10.1234/example.2026",
+      "release_key": "10.1234/example.2026:published",
+      "version": "published",
+      "revision": null,
+      "identifiers": [],
+      "source_url": "https://example.org/paper.pdf",
+      "file_name": "paper.pdf",
+      "media_type": "application/pdf",
+      "size_bytes": 100000,
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "upstream_checksum": null,
+      "local_blob_path": "blobs/sha256/11/1111111111111111111111111111111111111111111111111111111111111111",
+      "source_observation_ids": [
+        "obs_world_bank_example"
+      ],
+      "access_status": "public",
+      "download_status": "downloaded_verified",
+      "license_expression": "CC-BY-4.0",
+      "terms_url": null,
+      "license_decision": "redistribute_with_attribution"
+    },
+    {
+      "artifact_id": "artifact_author_package",
+      "role": "author_package",
+      "visibility": "agent_visible",
+      "family_key": "RR_EXAMPLE_2026_001",
+      "release_key": "RR_EXAMPLE_2026_001:v1",
+      "version": "v1",
+      "revision": null,
+      "identifiers": [],
+      "source_url": "https://example.org/author-package.zip",
+      "file_name": "author-package.zip",
+      "media_type": "application/zip",
+      "size_bytes": 200000,
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "upstream_checksum": "md5:00000000000000000000000000000000",
+      "local_blob_path": "blobs/sha256/22/2222222222222222222222222222222222222222222222222222222222222222",
+      "source_observation_ids": [
+        "obs_world_bank_example"
+      ],
+      "access_status": "public",
+      "download_status": "downloaded_verified",
+      "license_expression": "MIT",
+      "terms_url": null,
+      "license_decision": "redistribute"
+    },
+    {
+      "artifact_id": "artifact_private_report",
+      "role": "reproduction_report",
+      "visibility": "curator_only",
+      "family_key": "report:RR_EXAMPLE_2026_001",
+      "release_key": "report:RR_EXAMPLE_2026_001:v1",
+      "version": "v1",
+      "revision": null,
+      "identifiers": [],
+      "source_url": "https://example.org/reproduction-report.pdf",
+      "file_name": "reproduction-report.pdf",
+      "media_type": "application/pdf",
+      "size_bytes": 50000,
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "upstream_checksum": null,
+      "local_blob_path": "curation/private/reports/3333333333333333333333333333333333333333333333333333333333333333",
+      "source_observation_ids": [
+        "obs_world_bank_example"
+      ],
+      "access_status": "public",
+      "download_status": "downloaded_verified",
+      "license_expression": "CC-BY-4.0",
+      "terms_url": null,
+      "license_decision": "restricted_internal_only"
+    }
+  ],
+  "relations": [
+    {
+      "relation_id": "relation_package_paper",
+      "subject_entity_type": "artifact",
+      "subject_id": "artifact_author_package",
+      "predicate": "authored_package_for",
+      "object_entity_type": "paper",
+      "object_id": "paper:10.1234/example.2026",
+      "evidence": [
+        {
+          "method": "explicit_typed_relation",
+          "source_observation_id": "obs_world_bank_example",
+          "confidence": 1.0,
+          "source_field": "project_desc.output",
+          "quoted_value": "10.1234/example.2026"
+        }
+      ],
+      "review_status": "human_verified",
+      "reviewer_id": "curator_001",
+      "reviewed_at": "2026-08-21T13:00:00Z"
+    },
+    {
+      "relation_id": "relation_report_paper",
+      "subject_entity_type": "artifact",
+      "subject_id": "artifact_private_report",
+      "predicate": "assesses",
+      "object_entity_type": "paper",
+      "object_id": "paper:10.1234/example.2026",
+      "evidence": [
+        {
+          "method": "manual_verification",
+          "source_observation_id": "obs_world_bank_example",
+          "confidence": 1.0,
+          "source_field": "resources",
+          "quoted_value": "reproduction-report.pdf"
+        }
+      ],
+      "review_status": "human_verified",
+      "reviewer_id": "curator_001",
+      "reviewed_at": "2026-08-21T13:00:00Z"
+    }
+  ],
+  "screening": {
+    "overall_status": "in_progress",
+    "rubric_version": "repro-curation-1.0",
+    "gates": [
+      {
+        "gate_id": "C1",
+        "status": "pass",
+        "reason_codes": [],
+        "evidence_ids": [
+          "obs_world_bank_example"
+        ],
+        "reviewer_id": "curator_001",
+        "reviewed_at": "2026-08-21T13:00:00Z",
+        "note": "Synthetic validation decision."
+      },
+      {
+        "gate_id": "C2",
+        "status": "pass",
+        "reason_codes": [],
+        "evidence_ids": [
+          "paper:10.1234/example.2026"
+        ],
+        "reviewer_id": "curator_001",
+        "reviewed_at": "2026-08-21T13:00:00Z",
+        "note": "Synthetic validation decision."
+      }
+    ],
+    "primary_exclusion_code": null
+  },
+  "temporal": {
+    "paper_first_public_at": "2026-01-15T00:00:00Z",
+    "package_release_at": "2026-02-01T00:00:00Z",
+    "report_release_at": "2026-03-01T00:00:00Z",
+    "task_first_public_at": null,
+    "knowledge_cutoff_slices": [
+      {
+        "cutoff": "2024-05-13",
+        "status": "all_evidence_post_cutoff"
+      }
+    ]
+  },
+  "safety": {
+    "status": "pass",
+    "archive_scan": "pass",
+    "secret_scan": "pass",
+    "malware_scan": "pass",
+    "findings": []
+  },
+  "notes": [
+    {
+      "author_id": "curator_001",
+      "created_at": "2026-08-21T13:00:00Z",
+      "text": "This is synthetic example data, not a real paper or DOI assertion."
+    }
+  ],
+  "created_at": "2026-08-21T12:00:00Z",
+  "updated_at": "2026-08-21T13:00:00Z"
+}

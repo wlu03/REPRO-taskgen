@@ -1166,6 +1166,11 @@ def normalize_record(
         "catalog_url": f"https://www.icpsr.umich.edu/sites/aea/view/studies/{study_id}",
         "project_url": project_url,
         "updated_at": str(source.get("DATEUPDATED") or ""),
+        "dates": {
+            "published": "",
+            "updated": str(source.get("DATEUPDATED") or ""),
+            "retrieved": utc_now(),
+        },
         "authors": [str(author) for author in authors if author],
         "summary": summary,
         "owner": str(source.get("OWNER") or ""),
@@ -1366,9 +1371,11 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-root",
+        "--output-dir",
+        "--output",
         type=Path,
         default=None,
-        help="output directory (default: the scraper project directory)",
+        help="output directory (default: output/)",
     )
     args = parser.parse_args(argv)
     if args.study_id is not None and not str(args.study_id).isdigit():
@@ -1403,7 +1410,7 @@ def run(args: argparse.Namespace) -> int:
     root = (
         args.output_root.expanduser().resolve()
         if args.output_root is not None
-        else project_root
+        else project_root / "output"
     )
     root.mkdir(parents=True, exist_ok=True)
     data_dir = root / "data"

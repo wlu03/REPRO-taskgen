@@ -5,7 +5,7 @@ import re
 from typing import Any, Iterable
 from urllib.parse import quote, urljoin
 
-from .util import html_to_text, human_bytes, localized_text, safe_component, safe_filename, stable_file_id
+from .util import html_to_text, human_bytes, localized_text, safe_component, safe_filename, stable_file_id, utc_now
 
 
 SCHEMA_VERSION = "2.0.0"
@@ -385,6 +385,11 @@ def normalize_record(
         "publication_date": str(metadata.get("publication_date") or ""),
         "created": str(record.get("created") or ""),
         "updated": str(record.get("updated") or record.get("modified") or ""),
+        "dates": {
+            "published": str(metadata.get("publication_date") or ""),
+            "updated": str(record.get("updated") or record.get("modified") or ""),
+            "retrieved": utc_now(),
+        },
         "revision": record.get("revision"),
         "version": str(metadata.get("version") or record.get("version") or ""),
         "version_index": versions.get("index"),

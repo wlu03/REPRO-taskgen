@@ -577,6 +577,16 @@ def normalize_record(
             or version.get("releaseTime")
             or search_item.get("published_at")
         ),
+        "dates": {
+            "published": (
+                version.get("publicationDate")
+                or version.get("releaseTime")
+                or search_item.get("published_at")
+                or ""
+            ),
+            "updated": version.get("lastUpdateTime") or "",
+            "retrieved": utc_now(),
+        },
         "version": {
             "version_id": version.get("id"),
             "number": version_number,
@@ -656,6 +666,11 @@ def failed_record(
         "languages": [],
         "depositor": None,
         "publication_date": search_item.get("published_at"),
+        "dates": {
+            "published": search_item.get("published_at") or "",
+            "updated": search_item.get("updatedAt") or "",
+            "retrieved": utc_now(),
+        },
         "version": {
             "version_id": search_item.get("versionId"),
             "number": None if discovered_version.startswith(":") else discovered_version,
@@ -1550,6 +1565,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-dir",
+        "--output",
+        "--output-root",
         type=Path,
         default=None,
         help="Output directory (default: output/, or smoke-output/ for --smoke-test).",

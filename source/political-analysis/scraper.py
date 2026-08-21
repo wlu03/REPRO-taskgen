@@ -1353,6 +1353,11 @@ def parse_dataset_croissant(
         "authors": authors,
         "keywords": all_text_values(document.get("keywords")),
         "published_at": first_nonempty(document.get("datePublished"), discovery.get("published_at")),
+        "dates": {
+            "published": first_nonempty(document.get("datePublished"), discovery.get("published_at")) or "",
+            "updated": text_value(document.get("dateModified")) or "",
+            "retrieved": utc_now(),
+        },
         "modified_at": text_value(document.get("dateModified")),
         "version": text_value(document.get("version")),
         "license": text_value(document.get("license")),
@@ -1945,7 +1950,7 @@ def make_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dry-run", action="store_true", help="select downloads but do not transfer file bytes")
     parser.add_argument("--base-url", default="https://dataverse.harvard.edu")
     parser.add_argument("--collection", default="pan")
-    parser.add_argument("--output-dir", type=Path, default=Path("."), help="directory containing catalog.json and data/")
+    parser.add_argument("--output-dir", "--output", "--output-root", type=Path, default=Path("output"), help="output directory (default: output/)")
     parser.add_argument("--max-records", type=positive_int)
     parser.add_argument("--max-pages", type=positive_int, default=10000)
     parser.add_argument(
