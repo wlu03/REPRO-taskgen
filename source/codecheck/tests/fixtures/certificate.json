@@ -1,0 +1,28 @@
+{
+  "certificate": {
+    "id": "2025-021",
+    "url": "https://codecheck.org.uk/register/certs/2025-021/"
+  },
+  "paper": {
+    "title": "Airspeed estimation for UAVs using only propeller feedback",
+    "authors": [
+      {"name": "Evangelos Ntouros", "orcid": "0009-0006-3918-4240"},
+      {"name": "Pavel Kelley"}
+    ],
+    "reference": "https://doi.org/10.48550/arXiv.2507.03456"
+  },
+  "codecheck": {
+    "codecheckers": [
+      {"name": "Heather Andrews", "orcid": "0000-0002-6637-2830"}
+    ],
+    "check_time": "2025-07-30 18:00:00",
+    "repository": "github::codecheckers/certificate-2025-021",
+    "report": "https://doi.org/10.5281/zenodo.16616998",
+    "type": "institution",
+    "venue": "TU Delft DCC",
+    "summary": "All plotted figures were reproduced.",
+    "manifest": [
+      {"file": "flight_Va_predict.pdf", "comment": "manuscript Figure 7a"}
+    ]
+  }
+}

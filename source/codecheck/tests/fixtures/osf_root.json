@@ -1,0 +1,19 @@
+{
+  "data": {
+    "id": "abc12",
+    "attributes": {
+      "title": "Public project",
+      "public": true,
+      "date_modified": "2025-01-01T00:00:00Z",
+      "node_license": {"copyright_holders": ["Example Author"], "year": "2025"}
+    },
+    "relationships": {
+      "license": {
+        "links": {
+          "related": {"href": "https://api.osf.io/v2/licenses/mit/"}
+        },
+        "data": {"id": "mit", "type": "licenses"}
+      }
+    }
+  }
+}

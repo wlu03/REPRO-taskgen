@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.py[cod]
+
+# Generated catalogs, cached responses, checkpoints, logs, and downloads.
+catalog.json
+data/
+state/
+logs/
+smoke-output/
+
+# Partial downloads and local secrets.
+*.part
+*.part.json
+.env

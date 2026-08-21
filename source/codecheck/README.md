@@ -1,0 +1,315 @@
+# CODECHECK Register Scraper
+
+This project inventories records from the [CODECHECK Register](https://codecheck.org.uk/register/) and can inventory or download their public certificate artifacts and CODECHECK reproducibility packages.
+
+The scraper uses CODECHECK's published machine-readable data instead of scraping the HTML table:
+
+1. [`register.json`](https://codecheck.org.uk/register/register.json) discovers every rendered certificate and provides the exact registered artifact URL.
+2. [`register-full.json`](https://codecheck.org.uk/register/register-full.json) provides a second enriched register representation.
+3. Each certificate's `index.json` supplies authors, codecheckers, the check summary, and the output manifest.
+4. [`.meta.json`](https://codecheck.org.uk/register/.meta.json) records the register build time, CODECHECK package version, and exact register Git commit.
+5. Public CODECHECK packages are resolved only when requested, using the official API for GitHub, GitLab, OSF, or Zenodo.
+
+The HTML register is for people. The JSON representations are the stable integration source documented by the [official register repository](https://github.com/codecheckers/register).
+
+## Collection Stages
+
+| Stage | Method label written to the catalog | Source or operation | Output |
+| --- | --- | --- | --- |
+| Discover certificates | `codecheck_register_json` | `GET /register/register.json` | `data/raw/register.json` |
+| Archive enriched register | `codecheck_register_full_json` | `GET /register/register-full.json` | `data/raw/register-full.json` |
+| Pin the register build | `codecheck_register_meta_json` | `GET /register/.meta.json` | `data/raw/.meta.json` |
+| Enrich each certificate | `codecheck_certificate_json` | `GET /register/certs/{id}/index.json` | `data/{id}/certificate_response.json` |
+| Download registered report | `codecheck_registered_artifact_link` | Exact `Certificate PDF` URL from `register.json` | `data/{id}/files/certificate/` |
+| Resolve migrated ResearchEquals report | `researchequals_v2_version_api` | Legacy registered UUID to the provider's published v2 version and canonical file endpoint | `data/{id}/provider_responses/` |
+| Resolve GitHub package | `github_repository_api_archive` | Public repository metadata, default-branch commit, commit-pinned ZIP URL | `provider_responses/` and optionally `files/repository/` |
+| Resolve GitLab package | `gitlab_repository_api_archive` | Public project metadata, default-branch commit, commit-pinned ZIP URL | `provider_responses/` and optionally `files/repository/` |
+| Resolve OSF package | `osf_files_api_recursive` | Public nodes, components, storages, folders, and exact file links | `provider_responses/` and optionally `files/repository/` |
+| Resolve Zenodo package | `zenodo_records_api` | Public record API and exact file content links | `provider_responses/` and optionally `files/repository/` |
+
+## Record Identifiers
+
+CODECHECK uses several identifiers that are related but not interchangeable.
+
+| Identifier | Example | Purpose |
+| --- | --- | --- |
+| Certificate ID | `2025-021` | Stable CODECHECK identifier and local folder name |
+| Certificate page | `/register/certs/2025-021/` | Human-readable certificate |
+| Report DOI | `10.5281/zenodo.16616998` | Persistent citation for the report or certificate |
+| Registered artifact URL | `/api/records/16616998/files/codecheck.pdf/content` | Exact report file published in the register |
+| Repository descriptor | `github::codecheckers/certificate-2025-021` | Provider and package locator |
+| Paper reference | `10.48550/arXiv.2507.03456` | Article whose computations were checked |
+
+The register supports these repository descriptor forms:
+
+```text
+github::organization/repository
+github::organization/repository|path/inside/repository
+gitlab::group/project
+osf::PROJECT_ID
+zenodo::RECORD_ID
+```
+
+The optional `|path` identifies where `codecheck.yml` lives. It is not part of the repository name.
+
+The register descriptor locates the public repository, project, or record from which `codecheck.yml` and its CODECHECK bundle can be retrieved. Under the [CODECHECK configuration specification](https://codecheck.org.uk/spec/config/1.0/), a bundle is not a formally specified package and is not necessarily the original authors' source repository. When present, the upstream `Source` field is preserved verbatim as `check.source_note`; it may be prose or one or more URLs and is never followed. Source or repository URLs contained inside `codecheck.yml` are distinct from the register descriptor and are not automatically crawled.
+
+Example metadata requests:
+
+```text
+Discover records:     GET https://codecheck.org.uk/register/register.json
+Fetch build metadata: GET https://codecheck.org.uk/register/.meta.json
+Fetch one record:     GET https://codecheck.org.uk/register/certs/2025-021/index.json
+Download certificate: Use the exact "Certificate PDF" link from register.json
+```
+
+Certificate IDs have gaps and are never generated by counting. The source format also permits range identifiers such as `2025-111/2025-222`; the scraper safely converts `/` to `__` only for the local directory name.
+
+## Requirements
+
+- Python 3.10 or newer
+- Bash
+- Internet access for online collection
+- Enough disk space for the selected packages
+
+No account is needed for public records. A GitHub token is optional but recommended for a large repository crawl because anonymous GitHub API requests have a low rate limit:
+
+```bash
+export GITHUB_TOKEN="your_public-read-token"
+```
+
+The token is read only from the environment. It is never accepted as a command-line argument or written to the catalog. A repository must still be reported as public by the provider before it can be downloaded.
+
+## Quick Start
+
+Make the launcher executable and run a three-record metadata smoke test:
+
+```bash
+chmod +x run_scraper.sh
+./run_scraper.sh --smoke-test
+```
+
+The launcher creates `.venv/` and installs the small Python dependency set. The smoke test writes to `smoke-output/` and never overwrites a full crawl.
+
+Create a complete inventory of the official CODECHECK register metadata without calling external provider APIs or downloading files:
+
+```bash
+./run_scraper.sh --inventory-only
+```
+
+Also inventory the public files or commit-pinned archive exposed by each package provider, but do not download those artifacts:
+
+```bash
+./run_scraper.sh --inventory-repositories
+```
+
+Download only the exact certificate artifacts published by CODECHECK:
+
+```bash
+./run_scraper.sh --download-certificates
+```
+
+Download only public reproducibility repositories:
+
+```bash
+./run_scraper.sh --download-repositories
+```
+
+Download both certificate artifacts and repository packages:
+
+```bash
+./run_scraper.sh --download-files
+```
+
+Resume interrupted downloads:
+
+```bash
+./run_scraper.sh --download-files --resume
+```
+
+Skip any individual file or archive larger than 500 MiB:
+
+```bash
+./run_scraper.sh --download-files --max-file-mb 500
+```
+
+Keep at least 10 GiB of disk space free:
+
+```bash
+./run_scraper.sh --download-files --min-free-gb 10
+```
+
+Process only ten records with a two-second delay between requests:
+
+```bash
+./run_scraper.sh --inventory-only --max-records 10 --delay 2
+```
+
+If `catalog.json` already exists, a `--max-records` or `--certificate-id` run updates only the selected records and preserves the other valid prior records. `run_scope` distinguishes processed, preserved, and currently unrepresented certificate IDs and records the prior catalog timestamp and register hash. If the prior catalog is malformed or belongs to another schema, the scraper fails closed instead of replacing it with a partial catalog.
+
+Process one certificate:
+
+```bash
+./run_scraper.sh --download-files --certificate-id 2025-021
+```
+
+Download packages only for selected repository providers:
+
+```bash
+./run_scraper.sh --download-repositories --provider osf --provider zenodo
+```
+
+Refresh cached certificate and provider metadata:
+
+```bash
+./run_scraper.sh --inventory-only --refresh
+```
+
+Rebuild `catalog.json` from an existing cache without network requests:
+
+```bash
+./run_scraper.sh --inventory-only --offline
+```
+
+View all options:
+
+```bash
+./run_scraper.sh --help
+```
+
+Run the offline tests:
+
+```bash
+./.venv/bin/python -m unittest discover -s tests -v
+```
+
+## What It Collects
+
+For each certificate, the scraper:
+
+1. Saves the exact rendered register row.
+2. Saves the original per-certificate JSON response.
+3. Creates one normalized `record.json` entry.
+4. Preserves paper authors and ORCIDs, codecheckers and ORCIDs, the check timestamp, summary, and reproduced-output manifest when present.
+5. Records the report DOI, exact registered artifact link, paper link, OpenAlex link, and typed repository descriptor.
+6. Optionally downloads the registered certificate artifact.
+7. Optionally resolves a public CODECHECK package and either inventories or downloads its artifacts.
+8. Records provider metadata, repository revision, reported license, file sizes, final redirect URL, media type, SHA-256, ETag, and Last-Modified value when available.
+
+The field named `Certificate PDF` is not trusted as a file type. Some CODECHECK entries point to ZIPs or provider download endpoints. The response headers and final URL determine the saved filename and media type.
+
+Some older register entries contain retired ResearchEquals v1 routes. For those URLs only, the scraper preserves the exact registered URL and its UUID, archives the official public v2 version response, and downloads the main certificate from the canonical file endpoint returned by that migration. Supporting-file descriptors remain available in the archived version JSON but are not downloaded as if they were the registered certificate.
+
+Manifest paths are recorded as metadata. They are not treated as download links.
+
+The free-form checked-material source note is recorded verbatim. It is not parsed into download targets.
+
+Paper, DOI, OpenAlex, ORCID, and arbitrary external links are recorded but never crawled.
+
+## Repository Package Behavior
+
+| Provider | Retrieval behavior | Reproducibility pin |
+| --- | --- | --- |
+| GitHub | Confirms the repository is public, resolves the default branch and current commit, and records or downloads the official ZIP archive endpoint | Full commit SHA |
+| GitLab | Confirms public visibility, resolves the default branch and commit, then records or downloads the official repository archive endpoint | Full commit SHA |
+| OSF | Confirms the root is public, traverses public child components, storage providers, paginated folders, and records or downloads exact API file links | Node modification timestamp plus per-file hashes when supplied |
+| Zenodo | Reads the public record and records or downloads every file from the exact returned content link | Zenodo record ID and upstream checksums |
+
+The resolver follows the official [GitHub REST API](https://docs.github.com/en/rest/repos/contents), [GitLab Repositories API](https://docs.gitlab.com/api/repositories/), [OSF API](https://developer.osf.io/), and [Zenodo REST API](https://developers.zenodo.org/) documentation.
+
+A GitHub source archive is a snapshot, not a full Git clone, and does not contain repository history. The scraper does not initialize submodules, extract archives, resolve software dependencies, or execute any package code.
+
+## Output
+
+```text
+codecheck-register-scraper/
+├── catalog.json
+├── data/
+│   ├── raw/
+│   │   ├── register.json
+│   │   ├── register-full.json
+│   │   └── .meta.json
+│   └── 2025-021/
+│       ├── record.json
+│       ├── register_entry.json
+│       ├── certificate_response.json
+│       ├── provider_responses/
+│       │   ├── repository-<request-hash>.json
+│       │   └── commit-<request-hash>.json
+│       └── files/
+│           ├── certificate/
+│           │   └── <artifact-id>/
+│           │       └── codecheck.pdf
+│           └── repository/
+│               └── <artifact-id>/
+│                   └── repository.zip
+├── state/
+│   └── checkpoint.json
+└── logs/
+    └── errors.jsonl
+```
+
+OSF and Zenodo repositories may produce many repository artifact directories, one per public file. The stable artifact ID prevents files with the same name from overwriting one another. The original provider-relative path remains in `record.json` as `relative_path`.
+
+Important files:
+
+- `catalog.json`: One document containing source provenance, summary counts, and every normalized record.
+- `record.json`: The normalized record for one certificate. It is identical to the corresponding element in `catalog.json`.
+- `register_entry.json`: The exact source row used for that record.
+- `certificate_response.json`: Original per-certificate JSON metadata.
+- `provider_responses/`: Cached public provider API responses used to resolve packages and revisions.
+- `checkpoint.json`: Atomically written progress information.
+- `errors.jsonl`: One JSON object per failed or intentionally skipped metadata/download step.
+
+`catalog.json` includes:
+
+- total records and link coverage;
+- repository counts by provider;
+- check counts by type and venue;
+- registered certificate and repository artifact counts;
+- download-status counts;
+- known bytes and unknown-size artifact counts;
+- register response SHA-256, ETag, Last-Modified value, render metadata, and exact register commit.
+
+## Resume and Caching
+
+- The current global register is fetched on every online run so new certificates can be discovered.
+- Per-certificate and provider responses are cached and reused until `--refresh` is supplied.
+- If the global source is temporarily unavailable and a prior cache exists, the cached copy is used and marked `stale_fallback` in the catalog provenance.
+- Downloads are written to `.download.part` and atomically renamed only after completion. A sibling `.download.part.json` stores the stable source fingerprint, expected size, ETag, and Last-Modified validator.
+- `--resume` forces an identity representation and sends `Range` plus `If-Range` only when the sidecar contains a strong ETag or Last-Modified validator for the same source fingerprint. Appending requires a matching validator and exact `206 Content-Range`; missing or changed validators, changed provider metadata, ignored ranges, and `416` responses safely restart from byte zero.
+- Existing complete files are size-checked and SHA-256-checked before being skipped.
+- Provider SHA-256 or MD5 checksums are verified on the partial file before the atomic rename, so a corrupt refresh cannot overwrite a prior complete file.
+- Checkpoints and JSON documents are written through temporary files and `os.replace`.
+- `checkpoint.json` is an atomically written status ledger. Download continuation is driven by validated partial-file sidecars and cached provider metadata, not by blindly trusting the checkpoint.
+
+## Safety and Licensing
+
+- Inventory-only is the default.
+- Only public provider records are retrieved. Authentication and access restrictions are not bypassed.
+- Certificate downloads start from the exact URL CODECHECK publishes.
+- Retired ResearchEquals v1 certificate URLs are resolved only through the provider's public v2 Versions API; both the registered URL and canonical replacement URL are preserved.
+- Repository downloads are a separate explicit opt-in mode.
+- Provider package inventory without downloads is available through `--inventory-repositories`.
+- Unknown repository providers are recorded and skipped.
+- Download URLs must be HTTP or HTTPS and may not contain credentials.
+- Certificate IDs, response filenames, `Content-Disposition` values, manifest paths, and provider paths are sanitized against path traversal.
+- `--max-file-mb` limits each individual file even when the server omits `Content-Length`.
+- `--min-free-gb` preserves free disk space while streaming.
+- Rate limits and transient server failures use bounded retries with backoff. `--delay` provides additional politeness.
+- Archives are never opened, extracted, imported, or executed.
+- Generated data and partial downloads are ignored by Git.
+
+The [CODECHECK Register database is ODC-By](https://github.com/codecheckers/register#license), while the register's code and documentation are MIT. Those licenses do **not** automatically apply to linked papers, certificates, repositories, code, or data. The scraper records a provider-reported repository license when one is available, but you must check every record's actual license and terms before reuse or redistribution.
+
+The CODECHECK register permits crawling of its register pages, but external providers have their own API limits and terms. Use a reasonable delay and download only what you need.
+
+## Known Limitations
+
+- Public repositories can be very large; use both disk guards before a full package crawl.
+- Anonymous GitHub API limits are usually too low for resolving every GitHub package in one run. Set `GITHUB_TOKEN` or run in resumable batches.
+- Provider metadata may omit a license even when a license file exists inside the repository. The scraper does not extract an archive to search for one.
+- A mutable GitHub or GitLab default branch is pinned at crawl time, but an OSF project can continue changing after collection. Raw metadata, timestamps, hashes, and crawl time preserve what was observed.
+- Temporary signed object-storage query strings are removed from `final_url` and error messages; the stable canonical provider URL remains in `source_url` or `download_url`.
+- Files served through Git LFS, submodules, private components, expired links, or external storage add-ons may not be present in a source archive.
+- The scraper inventories packages; it does not verify that a package can be executed or that the original results reproduce.

@@ -1,0 +1,15 @@
+{
+  "id": 15025861,
+  "metadata": {
+    "license": {"id": "cc-by-4.0", "title": "Creative Commons Attribution 4.0"}
+  },
+  "files": [
+    {
+      "id": "file-1",
+      "key": "code/data.csv",
+      "size": 42,
+      "checksum": "md5:00000000000000000000000000000000",
+      "links": {"content": "https://zenodo.org/api/records/15025861/files/code/data.csv/content"}
+    }
+  ]
+}
