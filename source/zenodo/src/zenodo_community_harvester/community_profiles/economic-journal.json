@@ -1,0 +1,8 @@
+{
+  "key": "the-economic-journal",
+  "slug": "ej-replication-repository",
+  "title": "The Economic Journal",
+  "abbreviation": "EJ",
+  "aliases": ["economic-journal", "the-economic-journal", "ej"],
+  "records_url": "https://zenodo.org/communities/ej-replication-repository/records"
+}

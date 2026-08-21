@@ -1,0 +1,14 @@
+{
+  "id": "11111111-1111-1111-1111-111111111111",
+  "slug": "ej-replication-repository",
+  "metadata": {
+    "title": {
+      "en": "Supplementary replication material of articles published in The Economic Journal"
+    },
+    "description": "<p>Economic Journal replication packages.</p>"
+  },
+  "links": {
+    "self_html": "https://zenodo.org/communities/ej-replication-repository"
+  }
+}
+

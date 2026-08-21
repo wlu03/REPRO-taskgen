@@ -1,0 +1,37 @@
+{
+  "enabled": true,
+  "entries": [
+    {
+      "key": "README.pdf",
+      "file_id": "c65a3fb9-0223-4dd4-b260-eaf7c0d0b848",
+      "version_id": "55976876-f287-4fdf-8a94-5c1e99cab701",
+      "size": 67149,
+      "checksum": "md5:556b3320c8fc4b779300f5c2de552a16",
+      "mimetype": "application/pdf",
+      "status": "completed",
+      "access": {
+        "hidden": false
+      },
+      "links": {
+        "self": "https://zenodo.org/api/records/21725672/files/README.pdf",
+        "content": "https://zenodo.org/api/records/21725672/files/README.pdf/content"
+      }
+    },
+    {
+      "key": "nested/3 replication package.zip",
+      "file_id": "7cd09425-e1fa-4ef8-a1dc-9d9ca4d99fb8",
+      "version_id": "48da1e09-7125-4b8c-887a-ce5ded4be3d5",
+      "size": 46913096,
+      "checksum": "md5:7788fce08f9e8525a07ad3a7c1561959",
+      "mimetype": "application/zip",
+      "status": "completed",
+      "access": {
+        "hidden": false
+      },
+      "links": {
+        "self": "https://zenodo.org/api/records/21725672/files/nested%2F3%20replication%20package.zip",
+        "content": "/api/records/21725672/files/nested%2F3%20replication%20package.zip/content"
+      }
+    }
+  ]
+}

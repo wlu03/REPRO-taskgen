@@ -1,0 +1,21 @@
+{
+  "hits": {
+    "hits": [
+      {
+        "id": "21725672",
+        "metadata": {
+          "title": "Replication package for: Remote work and effort provision in teams"
+        },
+        "links": {
+          "self": "https://zenodo.org/api/records/21725672"
+        }
+      }
+    ],
+    "total": 1
+  },
+  "links": {
+    "self": "https://zenodo.org/api/communities/ej-replication-repository/records?page=1&size=25"
+  },
+  "sortBy": "newest"
+}
+

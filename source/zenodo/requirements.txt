@@ -1,0 +1,2 @@
+# No third-party runtime dependencies. The harvester uses Python's standard library.
+

@@ -1,0 +1,105 @@
+{
+  "id": "21725672",
+  "created": "2026-08-03T10:28:37.127661+00:00",
+  "updated": "2026-08-05T09:12:22.474914+00:00",
+  "metadata": {
+    "title": "Replication package for: Remote work and effort provision in teams",
+    "description": "<p>Dutcher, E. Glenn and Krista J. Saral (2026). <strong>Remote work</strong>.</p>",
+    "publication_date": "2026-07-31",
+    "publisher": "Zenodo",
+    "version": "v1",
+    "resource_type": {
+      "id": "software",
+      "title": {
+        "en": "Software"
+      }
+    },
+    "creators": [
+      {
+        "person_or_org": {
+          "type": "personal",
+          "name": "Dutcher, E. Glenn",
+          "family_name": "Dutcher",
+          "given_name": "E. Glenn"
+        },
+        "affiliations": []
+      },
+      {
+        "person_or_org": {
+          "type": "personal",
+          "name": "Saral, Krista J.",
+          "identifiers": [
+            {
+              "scheme": "orcid",
+              "identifier": "0000-0002-5470-0972"
+            }
+          ]
+        },
+        "affiliations": [
+          {
+            "name": "Example University"
+          }
+        ]
+      }
+    ],
+    "rights": [
+      {
+        "id": "cc-by-4.0",
+        "title": {
+          "en": "Creative Commons Attribution 4.0 International"
+        },
+        "props": {
+          "url": "https://creativecommons.org/licenses/by/4.0/legalcode"
+        }
+      }
+    ],
+    "related_identifiers": [
+      {
+        "identifier": "10.1093/ej/example",
+        "scheme": "doi",
+        "relation": {
+          "id": "isSupplementTo"
+        },
+        "resource_type": {
+          "id": "publication-article"
+        }
+      },
+      {
+        "identifier": "https://example.org/project",
+        "scheme": "url",
+        "relation": {
+          "id": "isReferencedBy"
+        }
+      }
+    ],
+    "keywords": [
+      "replication"
+    ]
+  },
+  "access": {
+    "record": "public",
+    "files": "public",
+    "status": "open"
+  },
+  "pids": {
+    "doi": {
+      "identifier": "10.5281/zenodo.21725672"
+    },
+    "concept-doi": {
+      "identifier": "10.5281/zenodo.21725671"
+    }
+  },
+  "parent": {
+    "id": "21725671"
+  },
+  "versions": {
+    "index": 1,
+    "is_latest": true
+  },
+  "links": {
+    "self": "https://zenodo.org/api/records/21725672",
+    "self_html": "https://zenodo.org/records/21725672",
+    "files": "https://zenodo.org/api/records/21725672/files",
+    "versions": "https://zenodo.org/api/records/21725672/versions"
+  }
+}
