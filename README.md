@@ -1,0 +1,1 @@
+`run_script.sh` this will run the scrapper to collect the sources in `source/`. 
