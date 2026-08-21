@@ -1,0 +1,66 @@
+{
+  "@context": {
+    "@vocab": "https://schema.org/",
+    "cr": "http://mlcommons.org/croissant/"
+  },
+  "@type": "sc:Dataset",
+  "name": "Dataset Alpha",
+  "url": "https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/AAAAAA",
+  "description": "A reproducibility package.",
+  "creator": [
+    {
+      "@type": "Person",
+      "givenName": "Ada",
+      "familyName": "Lovelace",
+      "name": "Lovelace, Ada"
+    },
+    {
+      "@type": "Person",
+      "name": "Hopper, Grace"
+    }
+  ],
+  "keywords": [
+    "Political Science",
+    "Replication"
+  ],
+  "license": "http://creativecommons.org/publicdomain/zero/1.0",
+  "datePublished": "2026-01-01",
+  "dateModified": "2026-02-01",
+  "version": "2.0",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Harvard Dataverse"
+  },
+  "includedInDataCatalog": {
+    "@type": "DataCatalog",
+    "name": "Political Analysis"
+  },
+  "citeAs": "@data{DVN/AAAAAA_2026, author = {Lovelace, Ada}}",
+  "citation": [
+    {
+      "@type": "CreativeWork",
+      "url": "https://example.org/paper"
+    }
+  ],
+  "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "replication.zip",
+      "name": "replication.zip",
+      "encodingFormat": "application/zip",
+      "md5": "00000000000000000000000000000000",
+      "contentSize": "1234",
+      "contentUrl": "https://dataverse.harvard.edu/api/access/datafile/111"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "README.txt",
+      "name": "README.txt",
+      "encodingFormat": "text/plain",
+      "md5": "11111111111111111111111111111111",
+      "contentSize": "42",
+      "contentUrl": "https://dataverse.harvard.edu/api/access/datafile/112"
+    }
+  ],
+  "recordSet": []
+}

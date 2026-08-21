@@ -13,6 +13,7 @@ catalog.json
 data/
 state/
 logs/
+output/
 smoke-output/
 
 # Per-scraper report files
@@ -23,5 +24,13 @@ missing_paper_links.json
 *.part
 .*.part
 
+# Local credentials and browser session material — never commit these.
+# aea-icpsr takes --cookie-file; political-analysis sources .env in run_scraper.sh.
+.env
+.env.*
+cookies.txt
+*.cookies.txt
+
 # OS cruft
 .DS_Store
+Thumbs.db

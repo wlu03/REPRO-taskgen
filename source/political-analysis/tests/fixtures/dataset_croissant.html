@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <script type="application/ld+json">
+      {
+        "@context": {
+          "sc": "https://schema.org/",
+          "cr": "http://mlcommons.org/croissant/"
+        },
+        "@type": "sc:Dataset",
+        "@id": "https://doi.org/10.7910/DVN/BBBBBB",
+        "name": "Dataset Beta",
+        "description": "Croissant example",
+        "creator": {"@type": "sc:Person", "name": "Jane Doe"},
+        "distribution": [
+          {
+            "@type": "cr:FileObject",
+            "@id": "file.csv",
+            "name": "data/file.csv",
+            "encodingFormat": "text/csv",
+            "contentSize": "42",
+            "contentUrl": "/api/access/datafile/222",
+            "md5": "0123456789abcdef0123456789abcdef"
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body></body>
+</html>
