@@ -21,6 +21,7 @@ logs/
 output/
 jcre-output/
 smoke-output/
+browser-profile/
 
 # Per-scraper report files
 inventory_summary.json
