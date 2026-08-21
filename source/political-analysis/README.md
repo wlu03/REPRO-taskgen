@@ -60,9 +60,36 @@ file entry as `redirected_to`.
 ## Rate limits
 
 The API is not rate-limit-free. A sweep at roughly three requests per second
-was cut off with `HTTP 403` partway through the collection, and the block
-covered the whole API for several minutes. The default `--delay 1.0` is the
-conservative setting; do not lower it for a full crawl.
+was cut off with a plain `HTTP 403` partway through the collection, and the
+block covered the whole API — including unrelated endpoints — for several
+minutes. Harvard sends no `X-RateLimit` headers and no `Retry-After`, so the
+scraper has to pace itself.
+
+Three mechanisms keep a crawl under that threshold:
+
+* **A minimum delay between requests.** `--delay` (default `1.5` seconds).
+* **A rolling one-minute ceiling.** `--max-requests-per-minute` (default `40`).
+  This caps bursts even when individual gaps are short, so the average rate
+  over any minute stays under two-thirds of a request per second. Pass `0` to
+  disable it and rely on `--delay` alone.
+* **Adaptive backoff.** A rate-limit response doubles the delay (up to 30
+  seconds) and pauses for at least a minute, one minute more for each
+  consecutive refusal. After 25 consecutive successes the delay decays back
+  toward the configured value.
+
+A `403` carrying a JSON body is a per-file access restriction, not
+backpressure, and is reported against that file without slowing the crawl.
+
+If four rate-limit responses arrive in a row the run stops with a
+`RateLimitError` instead of continuing to push. Everything fetched so far is
+cached, so a later run resumes rather than restarting:
+
+```bash
+./run_scraper.sh --download-files --resume
+```
+
+At the defaults a full 626-dataset inventory takes roughly 16 minutes. Raising
+the rate to save a few minutes risks a block that costs more than it saves.
 
 ## Requirements
 
@@ -135,6 +162,13 @@ Test only 10 datasets with a two-second request delay:
 
 ```bash
 ./run_scraper.sh --inventory-only --max-records 10 --delay 2
+```
+
+Crawl more slowly than the default when sharing the connection or after a
+block:
+
+```bash
+./run_scraper.sh --inventory-only --delay 3 --max-requests-per-minute 20
 ```
 
 Download only ZIP and PDF files:
@@ -311,7 +345,7 @@ Cookies are used only for HTTP requests and are not written to `catalog.json` or
 - Downloaded archives are not opened, extracted, imported, or executed.
 - `--max-file-mb` limits individual file sizes.
 - `--min-free-gb` preserves free disk space.
-- `--delay` controls request frequency.
+- `--delay` and `--max-requests-per-minute` control request frequency, and the client backs off further whenever the repository pushes back.
 - Check each dataset's license before reusing or redistributing its files.
 
 Generated output directories are ignored by Git because they may be large or contain files with record-specific licenses.
