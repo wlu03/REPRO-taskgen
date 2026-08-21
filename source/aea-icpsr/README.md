@@ -51,9 +51,40 @@ Attempt project ZIP downloads:
 ./run_scraper.sh --download-files --max-file-mb 500
 ```
 
-ICPSR may require a logged-in session and terms acceptance even for public
-packages. If you already have an authorized session, the scraper can load a
-local Netscape-format cookie jar:
+### Downloading from openICPSR
+
+Every page on `www.openicpsr.org` — the project landing page as well as the
+package endpoint — is served behind a Cloudflare **managed challenge**. Plain
+HTTP clients receive `403` with `cf-mitigated: challenge` no matter what
+headers they send, because clearance is granted only after a browser executes
+the challenge and is then bound to the client's address, User-Agent, and TLS
+fingerprint. Metadata is unaffected: `search.icpsr.umich.edu` and
+`bibliography.icpsr.umich.edu` are ordinary hosts, which is why inventory runs
+succeed while downloads do not.
+
+Downloads therefore need a person. `--browser` opens a persistent Chromium
+profile, waits while you solve the challenge, sign in, and accept the study's
+terms, and then transfers the package through that same browser:
+
+```bash
+./.venv/bin/python -m pip install -r requirements-browser.txt
+./.venv/bin/python -m playwright install chromium
+./run_scraper.sh --download-files --browser --max-records 1 --max-file-mb 500
+```
+
+The profile directory (`browser-profile/` by default, or `--browser-profile`)
+is reused between runs so an already-cleared session is not thrown away.
+`--browser-wait` bounds how long each study waits for you (default 600s); when
+it expires the study is recorded as `access_blocked` and the run moves on.
+`--browser-headless` is only useful once a profile is already cleared — a
+headless browser cannot solve a challenge on its own.
+
+Nothing in this repository attempts to defeat, forge, or replay a challenge.
+Clearance comes from a person, and each study's terms are accepted by that
+person, not by the scraper.
+
+Plain `--cookie-file` remains available for hosts that do not challenge, but
+it will not clear Cloudflare on its own:
 
 ```bash
 ./run_scraper.sh --download-files --cookie-file /path/to/cookies.txt

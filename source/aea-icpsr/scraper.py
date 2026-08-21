@@ -1012,6 +1012,101 @@ def download_package(
         response.close()
 
 
+def finalize_downloaded_package(
+    temporary: Path,
+    final_path: Path,
+    filename: str,
+    max_bytes: int | None,
+) -> dict[str, Any]:
+    """Validate, hash, and atomically place a completed package file."""
+    if not temporary.is_file() or temporary.is_symlink():
+        raise RuntimeError("browser did not produce a regular file")
+    written = temporary.stat().st_size
+    if written == 0:
+        raise RuntimeError("browser produced an empty file")
+    if max_bytes is not None and written > max_bytes:
+        raise RuntimeError("download exceeded --max-file-mb")
+    if not zipfile.is_zipfile(temporary):
+        raise RuntimeError("downloaded project is not a valid ZIP archive")
+    checksum = sha256_file(temporary)
+    os.replace(temporary, final_path)
+    return {
+        "status": "complete",
+        "bytes": written,
+        "sha256": checksum,
+        "path": str(Path("files") / filename),
+        "transport": "browser",
+        "completed_at": utc_now(),
+    }
+
+
+def download_package_via_browser(
+    session: Any,
+    resource: dict[str, Any],
+    record_dir: Path,
+    max_bytes: int | None,
+    min_free_bytes: int,
+    project_url: str,
+) -> dict[str, Any]:
+    """Download one project ZIP through an operator-cleared browser session."""
+    files_dir = record_dir / "files"
+    ensure_direct_child_directory(record_dir, files_dir)
+    filename = safe_component(
+        str(resource.get("filename") or ""),
+        f"{resource.get('resource_id', 'project')}.zip",
+    )
+    if not filename.lower().endswith(".zip"):
+        filename += ".zip"
+    final_path = files_dir / filename
+    if final_path.parent != files_dir or final_path.is_symlink():
+        raise ValueError(f"refusing unsafe package path: {final_path}")
+
+    prior = resource.get("download")
+    if isinstance(prior, dict) and prior.get("status") == "complete":
+        verified = verify_existing_download(final_path, prior)
+        if verified is not None:
+            return verified
+
+    free = shutil.disk_usage(files_dir).free
+    if free < min_free_bytes:
+        return {
+            "status": "skipped_low_space",
+            "free_bytes": free,
+            "reserve_bytes": min_free_bytes,
+            "checked_at": utc_now(),
+        }
+
+    state = session.ensure_clearance(project_url or str(resource["url"]))
+    if state != "ready":
+        return {
+            "status": {
+                "challenge": "access_blocked",
+                "terms": "terms_required",
+                "login": "auth_required",
+            }.get(state, "failed"),
+            "error": f"browser session stopped at {state} page",
+            "checked_at": utc_now(),
+        }
+
+    temporary = final_path.with_name(f".{final_path.name}.part")
+    if temporary.exists():
+        if temporary.is_symlink() or not temporary.is_file():
+            raise ValueError(f"refusing unsafe partial file: {temporary}")
+        temporary.unlink()
+    try:
+        result = session.download(str(resource["url"]), temporary)
+        if result.get("status") != "complete":
+            result.setdefault("checked_at", utc_now())
+            return result
+        return finalize_downloaded_package(
+            temporary, final_path, filename, max_bytes
+        )
+    except Exception:
+        if temporary.exists() and temporary.is_file() and not temporary.is_symlink():
+            temporary.unlink()
+        raise
+
+
 def normalize_record(
     source: dict[str, Any],
     previous_record: dict[str, Any],
@@ -1230,6 +1325,32 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         help="reuse cached discovery/detail pages and verify existing ZIPs",
     )
     parser.add_argument(
+        "--browser",
+        action="store_true",
+        help=(
+            "download through a persistent Chromium profile with a person in "
+            "the loop; required for openICPSR, which is behind a Cloudflare "
+            "managed challenge"
+        ),
+    )
+    parser.add_argument(
+        "--browser-profile",
+        type=Path,
+        default=None,
+        help="Chromium profile directory to reuse (default: browser-profile/)",
+    )
+    parser.add_argument(
+        "--browser-wait",
+        type=float,
+        default=600.0,
+        help="seconds to wait for the operator per study (default: 600)",
+    )
+    parser.add_argument(
+        "--browser-headless",
+        action="store_true",
+        help="run Chromium headless (only useful once a profile is cleared)",
+    )
+    parser.add_argument(
         "--cookie-file",
         type=Path,
         help="authorized Netscape-format cookie jar for downloads (optional)",
@@ -1255,6 +1376,12 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         parser.error("--min-free-gb must be finite and nonnegative")
     if not math.isfinite(args.delay) or args.delay < 0:
         parser.error("--delay must be finite and nonnegative")
+    if args.browser and not args.download_files:
+        parser.error("--browser only applies with --download-files")
+    if not math.isfinite(args.browser_wait) or args.browser_wait < 0:
+        parser.error("--browser-wait must be finite and nonnegative")
+    if args.browser_profile is not None:
+        args.browser_profile = args.browser_profile.expanduser().resolve()
     if args.cookie_file is not None:
         args.cookie_file = args.cookie_file.expanduser().resolve()
         if not args.cookie_file.is_file():
@@ -1286,6 +1413,21 @@ def run(args: argparse.Namespace) -> int:
     catalog_path = root / "catalog.json"
     checkpoint_path = state_dir / "checkpoint.json"
     client = AeaIcpsrClient(args.delay, args.cookie_file)
+    browser_session = None
+    if args.browser:
+        from browser_download import AeaIcpsrBrowserSession
+
+        profile_dir = args.browser_profile or (root / "browser-profile")
+        browser_session = AeaIcpsrBrowserSession(
+            profile_dir,
+            headless=args.browser_headless,
+            wait_seconds=args.browser_wait,
+        )
+        browser_session.start()
+        print(
+            f"Browser profile: {profile_dir} (a Chromium window will open).",
+            flush=True,
+        )
     records: list[dict[str, Any]] = []
     failure_count = 0
     warning_count = 0
@@ -1391,13 +1533,23 @@ def run(args: argparse.Namespace) -> int:
                     if resource.get("kind") != "project_archive":
                         continue
                     try:
-                        resource["download"] = download_package(
-                            client,
-                            resource,
-                            record_dir,
-                            max_bytes,
-                            min_free_bytes,
-                        )
+                        if browser_session is not None:
+                            resource["download"] = download_package_via_browser(
+                                browser_session,
+                                resource,
+                                record_dir,
+                                max_bytes,
+                                min_free_bytes,
+                                normalized.get("project_url", ""),
+                            )
+                        else:
+                            resource["download"] = download_package(
+                                client,
+                                resource,
+                                record_dir,
+                                max_bytes,
+                                min_free_bytes,
+                            )
                         if resource["download"]["status"] in {
                             "auth_required",
                             "terms_required",
@@ -1470,6 +1622,8 @@ def run(args: argparse.Namespace) -> int:
         atomic_write_json(checkpoint_path, checkpoint)
     finally:
         client.close()
+        if browser_session is not None:
+            browser_session.close()
 
     print(f"Wrote {len(records)} normalized record(s) to {catalog_path}.", flush=True)
     if warning_count:

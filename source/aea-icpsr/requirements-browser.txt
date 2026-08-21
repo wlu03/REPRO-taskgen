@@ -1,0 +1,4 @@
+# Optional: only needed for --browser downloads from openICPSR.
+# After installing, fetch the browser build:
+#   .venv/bin/python -m playwright install chromium
+playwright==1.62.0

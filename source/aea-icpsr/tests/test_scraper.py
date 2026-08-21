@@ -97,6 +97,28 @@ class FlakySession:
         pass
 
 
+class FakeBrowserSession:
+    """Stands in for AeaIcpsrBrowserSession without launching Chromium."""
+
+    def __init__(self, state: str = "ready", payload: bytes | None = None,
+                 result: dict | None = None) -> None:
+        self.state = state
+        self.payload = payload
+        self.result = result
+        self.cleared_urls: list[str] = []
+        self.downloaded_urls: list[str] = []
+
+    def ensure_clearance(self, url: str) -> str:
+        self.cleared_urls.append(url)
+        return self.state
+
+    def download(self, url: str, destination) -> dict:
+        self.downloaded_urls.append(url)
+        if self.payload is not None:
+            destination.write_bytes(self.payload)
+        return self.result or {"status": "complete"}
+
+
 class AeaIcpsrScraperTests(unittest.TestCase):
     def test_connection_error_is_retried(self) -> None:
         client = scraper.AeaIcpsrClient(delay=0, max_retries=1)
@@ -413,6 +435,112 @@ class AeaIcpsrScraperTests(unittest.TestCase):
         self.assertEqual(summary["paper_links_missing"], 1)
         self.assertEqual(summary["downloaded_bytes"], 12)
         self.assertEqual(document["records"], records)
+
+    # -- browser-backed downloads -----------------------------------------
+
+    def _browser_resource(self) -> dict:
+        return {
+            "resource_id": "120506-V1",
+            "filename": "120506-V1.zip",
+            "url": "https://www.openicpsr.org/example.zip",
+            "download": {"status": "not_requested"},
+        }
+
+    def test_browser_download_saves_and_hashes_the_package(self) -> None:
+        archive = io.BytesIO()
+        with zipfile.ZipFile(archive, "w") as handle:
+            handle.writestr("README.txt", "hello")
+        body = archive.getvalue()
+        session = FakeBrowserSession(payload=body)
+        with tempfile.TemporaryDirectory() as temporary:
+            record_dir = Path(temporary) / "120506"
+            record_dir.mkdir()
+            result = scraper.download_package_via_browser(
+                session,
+                self._browser_resource(),
+                record_dir,
+                max_bytes=None,
+                min_free_bytes=0,
+                project_url="https://www.openicpsr.org/project/120506/view",
+            )
+            package = record_dir / "files" / "120506-V1.zip"
+            self.assertTrue(package.is_file())
+            self.assertTrue(zipfile.is_zipfile(package))
+            self.assertFalse(list(package.parent.glob(".*.part")))
+        self.assertEqual(result["status"], "complete")
+        self.assertEqual(result["bytes"], len(body))
+        self.assertEqual(result["sha256"], hashlib.sha256(body).hexdigest())
+        self.assertEqual(result["transport"], "browser")
+        self.assertEqual(
+            session.cleared_urls,
+            ["https://www.openicpsr.org/project/120506/view"],
+        )
+
+    def test_browser_download_reports_unsolved_challenge(self) -> None:
+        session = FakeBrowserSession(state="challenge")
+        with tempfile.TemporaryDirectory() as temporary:
+            record_dir = Path(temporary) / "120506"
+            record_dir.mkdir()
+            result = scraper.download_package_via_browser(
+                session, self._browser_resource(), record_dir,
+                max_bytes=None, min_free_bytes=0, project_url="https://x/view",
+            )
+            self.assertEqual(list((record_dir / "files").iterdir()), [])
+        self.assertEqual(result["status"], "access_blocked")
+        self.assertEqual(session.downloaded_urls, [])
+
+    def test_browser_download_maps_terms_and_login_states(self) -> None:
+        for state, expected in (("terms", "terms_required"), ("login", "auth_required")):
+            with tempfile.TemporaryDirectory() as temporary:
+                record_dir = Path(temporary) / "120506"
+                record_dir.mkdir()
+                result = scraper.download_package_via_browser(
+                    FakeBrowserSession(state=state), self._browser_resource(),
+                    record_dir, max_bytes=None, min_free_bytes=0,
+                    project_url="https://x/view",
+                )
+            self.assertEqual(result["status"], expected)
+
+    def test_browser_download_rejects_non_zip_and_clears_partial(self) -> None:
+        session = FakeBrowserSession(payload=b"<html>terms</html>")
+        with tempfile.TemporaryDirectory() as temporary:
+            record_dir = Path(temporary) / "120506"
+            record_dir.mkdir()
+            with self.assertRaises(RuntimeError):
+                scraper.download_package_via_browser(
+                    session, self._browser_resource(), record_dir,
+                    max_bytes=None, min_free_bytes=0, project_url="https://x/view",
+                )
+            files_dir = record_dir / "files"
+            self.assertEqual(list(files_dir.iterdir()), [])
+
+    def test_browser_download_enforces_max_file_size(self) -> None:
+        archive = io.BytesIO()
+        with zipfile.ZipFile(archive, "w") as handle:
+            handle.writestr("README.txt", "hello" * 100)
+        session = FakeBrowserSession(payload=archive.getvalue())
+        with tempfile.TemporaryDirectory() as temporary:
+            record_dir = Path(temporary) / "120506"
+            record_dir.mkdir()
+            with self.assertRaises(RuntimeError):
+                scraper.download_package_via_browser(
+                    session, self._browser_resource(), record_dir,
+                    max_bytes=10, min_free_bytes=0, project_url="https://x/view",
+                )
+            self.assertEqual(list((record_dir / "files").iterdir()), [])
+
+    def test_browser_download_skips_when_disk_is_low(self) -> None:
+        session = FakeBrowserSession(payload=b"zzz")
+        with tempfile.TemporaryDirectory() as temporary:
+            record_dir = Path(temporary) / "120506"
+            record_dir.mkdir()
+            result = scraper.download_package_via_browser(
+                session, self._browser_resource(), record_dir,
+                max_bytes=None, min_free_bytes=1 << 62,
+                project_url="https://x/view",
+            )
+        self.assertEqual(result["status"], "skipped_low_space")
+        self.assertEqual(session.cleared_urls, [])
 
 
 if __name__ == "__main__":
