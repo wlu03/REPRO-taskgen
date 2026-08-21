@@ -3,12 +3,13 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from typing import Iterable
-from urllib.parse import urljoin, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
 from .models import PublicationRecord, RelatedLink, ReplicationPackage
 from .utils import (
+    ARTICLE_DOI_RE,
     extract_article_doi,
     extract_doi,
     normalize_doi,
@@ -82,14 +83,88 @@ def _contains_package_link(tag: Tag) -> bool:
     return False
 
 
+def _article_dois_in(node: Tag) -> set[str]:
+    """Every distinct article DOI reachable from a node, in text or in an href."""
+    haystack = [node.get_text(" ", strip=True)]
+    haystack.extend(anchor.get("href", "") for anchor in node.find_all("a", href=True))
+    found: set[str] = set()
+    for value in haystack:
+        found.update(match.group(0).lower() for match in ARTICLE_DOI_RE.finditer(unquote(value or "")))
+    return found
+
+
+def _split_multi_doi_block(tag: Tag) -> list[Tag]:
+    """Split one hand-authored block that packs several publications into one tag.
+
+    The publications page is maintained by hand, and an editor occasionally
+    separates consecutive entries with <br/> inside a single <p> instead of
+    starting a new one. Such a block holds several DOIs but ``_parse_one`` only
+    ever emits the first, so the rest would be dropped silently. Rewrite the
+    block in place as one sibling per publication, splitting on the top-level
+    <br/> that follows a completed entry. The replacements stay in the document
+    so volume-heading lookup and tail-block scanning keep working.
+    """
+    children = list(tag.children)
+    groups: list[list] = []
+    current: list = []
+    current_has_doi = False
+
+    for index, child in enumerate(children):
+        if (
+            current_has_doi
+            and isinstance(child, Tag)
+            and child.name == "br"
+            and any(
+                _article_dois_in(later)
+                for later in children[index + 1 :]
+                if isinstance(later, Tag)
+            )
+        ):
+            groups.append(current)
+            current, current_has_doi = [], False
+            continue
+        current.append(child)
+        if not current_has_doi and isinstance(child, Tag) and _contains_article_doi(child):
+            current_has_doi = True
+    if current:
+        groups.append(current)
+
+    if len(groups) < 2:
+        return [tag]
+
+    replacements: list[Tag] = []
+    for group in groups:
+        clone = BeautifulSoup(f"<{tag.name}></{tag.name}>", "html.parser").find(tag.name)
+        assert clone is not None
+        clone.attrs = dict(tag.attrs)
+        for child in group:
+            clone.append(child.__copy__() if isinstance(child, Tag) else str(child))
+        if not _contains_article_doi(clone):
+            continue
+        # Keep the original document position so candidate ordering is preserved.
+        clone.sourceline = tag.sourceline
+        clone.sourcepos = tag.sourcepos
+        tag.insert_before(clone)
+        replacements.append(clone)
+
+    if not replacements:
+        return [tag]
+    tag.extract()
+    return replacements
+
+
 def _candidate_blocks(container: Tag) -> list[Tag]:
     candidates: list[Tag] = []
     seen_ids: set[int] = set()
 
-    for tag in container.find_all(["p", "li"]):
-        if _contains_article_doi(tag):
-            candidates.append(tag)
-            seen_ids.add(id(tag))
+    for tag in list(container.find_all(["p", "li"])):
+        if not _contains_article_doi(tag):
+            continue
+        for block in (
+            _split_multi_doi_block(tag) if len(_article_dois_in(tag)) > 1 else [tag]
+        ):
+            candidates.append(block)
+            seen_ids.add(id(block))
 
     # Fallback for hand-authored pages that use DIVs instead of paragraphs.
     for tag in container.find_all("div"):
@@ -348,4 +423,19 @@ def parse_publications(html: str, source_url: str) -> ParseOutput:
 
     if not output.records:
         output.warnings.append("No publication records containing a 10.18718/81781.* DOI were found.")
+
+    # Discovery must account for every article DOI on the page. A silent
+    # shortfall here means publications never reach the catalog at all.
+    dois_on_page = _article_dois_in(container)
+    dois_emitted = {
+        parsed.record.article_doi.lower()
+        for parsed in output.records
+        if parsed.record.article_doi
+    }
+    missing = sorted(dois_on_page - dois_emitted)
+    if missing:
+        output.warnings.append(
+            f"{len(missing)} article DOI(s) present on the page produced no record: "
+            + ", ".join(missing)
+        )
     return output
