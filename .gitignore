@@ -21,6 +21,7 @@ logs/
 output/
 jcre-output/
 smoke-output/
+browser-profile/
 
 # Per-scraper report files
 inventory_summary.json
@@ -34,6 +35,7 @@ missing_paper_links.json
 # aea-icpsr takes --cookie-file; political-analysis sources .env in run_scraper.sh.
 .env
 .env.*
+!.env.example
 cookies.txt
 *.cookies.txt
 

@@ -51,9 +51,72 @@ Attempt project ZIP downloads:
 ./run_scraper.sh --download-files --max-file-mb 500
 ```
 
-ICPSR may require a logged-in session and terms acceptance even for public
-packages. If you already have an authorized session, the scraper can load a
-local Netscape-format cookie jar:
+### Downloading from openICPSR
+
+Every page on `www.openicpsr.org` — the project landing page as well as the
+package endpoint — is served behind a Cloudflare **managed challenge**. Plain
+HTTP clients receive `403` with `cf-mitigated: challenge` no matter what
+headers they send, because clearance is granted only after a browser executes
+the challenge and is then bound to the client's address, User-Agent, and TLS
+fingerprint. Metadata is unaffected: `search.icpsr.umich.edu` and
+`bibliography.icpsr.umich.edu` are ordinary hosts, which is why inventory runs
+succeed while downloads do not.
+
+### Credentials (required before any download)
+
+Downloads need a signed-in ICPSR account. Create `.env` in this directory — it
+is gitignored, and `run_scraper.sh` loads it automatically:
+
+```bash
+cp .env.example .env
+$EDITOR .env          # fill in ICPSR_EMAIL and ICPSR_PASSWORD
+```
+
+```ini
+ICPSR_EMAIL=you@example.com
+ICPSR_PASSWORD=your-password
+```
+
+Never put these values in a source file. `browser_login.py` and `scraper.py`
+read them only from the environment, so a committed file cannot leak them.
+Register at <https://www.openicpsr.org/> if you do not have an account yet.
+
+**openICPSR's session cookie (`JSESSIONID`) is a browser-session cookie**: it is
+discarded when Chromium exits. A sign-in performed in a separate run therefore
+cannot carry over, and the sign-in has to happen in the same run as the
+download — which is what `--browser-auto-login` does:
+
+```bash
+./run_scraper.sh --download-files --browser --browser-auto-login \
+  --max-records 1 --max-file-mb 500
+```
+
+`browser_login.py` remains useful for checking the credentials interactively,
+but its session will not survive for a later scraper run.
+
+Downloads therefore need a person. `--browser` opens a persistent Chromium
+profile, waits while you solve the challenge, sign in, and accept the study's
+terms, and then transfers the package through that same browser:
+
+```bash
+./.venv/bin/python -m pip install -r requirements-browser.txt
+./.venv/bin/python -m playwright install chromium
+./run_scraper.sh --download-files --browser --max-records 1 --max-file-mb 500
+```
+
+The profile directory (`browser-profile/` by default, or `--browser-profile`)
+is reused between runs so an already-cleared session is not thrown away.
+`--browser-wait` bounds how long each study waits for you (default 600s); when
+it expires the study is recorded as `access_blocked` and the run moves on.
+`--browser-headless` is only useful once a profile is already cleared — a
+headless browser cannot solve a challenge on its own.
+
+Nothing in this repository attempts to defeat, forge, or replay a challenge.
+Clearance comes from a person, and each study's terms are accepted by that
+person, not by the scraper.
+
+Plain `--cookie-file` remains available for hosts that do not challenge, but
+it will not clear Cloudflare on its own:
 
 ```bash
 ./run_scraper.sh --download-files --cookie-file /path/to/cookies.txt
