@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jcre-replication-scraper"
+version = "1.0.0"
+description = "Inventory JCRE/IREE publications and their ZBW Journal Data replication packages."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "beautifulsoup4>=4.12,<5",
+  "requests>=2.31,<3",
+]
+
+[project.scripts]
+jcre-scraper = "jcre_scraper.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
